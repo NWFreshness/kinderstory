@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'KinderStory - Stories for Little Readers',
-  description: 'Generate fun, simple stories for kindergarteners with pictures!',
+  title: 'KinderStory — Tales for Little Readers',
+  description: 'Generate warm, wonderful stories for kindergarteners with beautiful illustrations.',
 };
 
 export default function RootLayout({

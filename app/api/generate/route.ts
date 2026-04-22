@@ -69,7 +69,7 @@ RULES:
       size: '1024x1024',
     });
 
-    const imageUrl = imageResponse.data[0]?.url || '';
+    const imageUrl = imageResponse.data?.[0]?.url || '';
 
     return NextResponse.json({ story, imageUrl, concept: seedConcept });
 
