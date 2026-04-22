@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import './globals.css';
 import {
   Document, Paragraph, TextRun, ImageRun, Packer, AlignmentType,
@@ -13,7 +13,6 @@ export default function Home() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const printableRef = useRef<HTMLDivElement>(null);
 
   const generateStory = async () => {
     setLoading(true);
@@ -107,57 +106,6 @@ export default function Home() {
     } catch (err) {
       alert('Failed to export DOCX. Please try again.');
       console.error('DOCX export error:', err);
-    }
-  };
-
-  const exportPdf = async () => {
-    if (!printableRef.current || !imageUrl) return;
-
-    const html2pdf = (await import('html2pdf.js')).default;
-
-    const opt = {
-      margin: [0.5, 0.5] as [number, number],
-      filename: 'kinderstory.pdf',
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
-      jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const },
-    };
-
-    // Pre-load image through proxy as data URL so html2canvas doesn't fight CORS
-    let dataUrl = proxyImageUrl(imageUrl);
-    try {
-      const imgRes = await fetch(proxyImageUrl(imageUrl));
-      if (!imgRes.ok) throw new Error('Proxy failed');
-      const imgBlob = await imgRes.blob();
-      dataUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(imgBlob);
-      });
-    } catch {
-      // fallback to proxy URL if conversion fails
-    }
-
-    // Also update the printable image src to the proxy/data URL
-    const imgEl = printableRef.current.querySelector('img');
-    const originalSrc = imgEl?.getAttribute('src') || '';
-    if (imgEl) imgEl.src = dataUrl;
-
-    // Briefly make visible for html2canvas, then restore
-    const el = printableRef.current;
-    const wasHidden = el.style.visibility === 'hidden';
-    el.style.visibility = 'visible';
-    el.style.opacity = '0';
-
-    try {
-      await html2pdf().set(opt).from(el).save();
-    } catch (err) {
-      alert('Failed to export PDF. Please try again.');
-      console.error('PDF export error:', err);
-    } finally {
-      el.style.visibility = wasHidden ? 'hidden' : '';
-      el.style.opacity = '';
-      if (imgEl) imgEl.src = originalSrc;
     }
   };
 
@@ -257,7 +205,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Export Buttons */}
+        {/* Export Button */}
         {story && imageUrl && !loading && (
           <section className="export-section">
             <p className="export-label">Save your story</p>
@@ -265,24 +213,8 @@ export default function Home() {
               <button className="btn btn-export-docx" onClick={exportDocx}>
                 📄 Download .docx
               </button>
-              <button className="btn btn-export-pdf" onClick={exportPdf}>
-                📝 Download .pdf
-              </button>
             </div>
           </section>
-        )}
-
-        {/* Hidden printable area for PDF */}
-        {story && imageUrl && (
-          <div ref={printableRef} className="printable-area">
-            <h1 className="printable-title">KinderStory</h1>
-            <p className="printable-story">{story}</p>
-            <img
-              src={imageUrl}
-              alt="Story illustration"
-              className="printable-image"
-            />
-          </div>
         )}
 
         {/* Footer */}

@@ -462,63 +462,6 @@ body::after {
   box-shadow: 0 2px 0 #2E4F63, 0 4px 12px rgba(74, 124, 155, 0.2);
 }
 
-.btn-export-pdf {
-  background: linear-gradient(180deg, #B85C50 0%, #9A4A40 100%);
-  color: white;
-  box-shadow: 0 4px 0 #7A3B33, 0 6px 16px rgba(184, 92, 80, 0.2);
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  min-width: 160px;
-}
-
-.btn-export-pdf:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 0 #7A3B33, 0 10px 24px rgba(184, 92, 80, 0.25);
-}
-
-.btn-export-pdf:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #7A3B33, 0 4px 12px rgba(184, 92, 80, 0.2);
-}
-
-/* Printable area */
-.printable-area {
-  position: fixed;
-  top: 0;
-  left: 0;
-  visibility: hidden;
-  z-index: -1;
-  width: 8.5in;
-  padding: 0.75in;
-  background: var(--paper-warm);
-  font-family: var(--font-body);
-  color: var(--ink-brown);
-}
-
-.printable-title {
-  font-family: var(--font-display);
-  font-size: 2.5rem;
-  text-align: center;
-  color: var(--accent-coral);
-  margin-bottom: 1.5rem;
-}
-
-.printable-story {
-  font-size: 1.25rem;
-  line-height: 1.9;
-  margin-bottom: 1.5rem;
-  text-align: left;
-}
-
-.printable-image {
-  width: 100%;
-  max-width: 500px;
-  height: auto;
-  display: block;
-  margin: 0 auto;
-  border-radius: 8px;
-}
-
 /* Footer */
 .footer {
   text-align: center;
