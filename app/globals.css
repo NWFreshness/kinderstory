@@ -483,11 +483,13 @@ body::after {
 
 /* Printable area */
 .printable-area {
-  position: absolute;
-  left: -9999px;
-  top: -9999px;
-  width: 8in;
-  padding: 0.5in;
+  position: fixed;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  z-index: -1;
+  width: 8.5in;
+  padding: 0.75in;
   background: var(--paper-warm);
   font-family: var(--font-body);
   color: var(--ink-brown);

@@ -48,17 +48,22 @@ export default function Home() {
     generateStory();
   };
 
-  const fetchImageAsBuffer = async (url: string): Promise<Uint8Array> => {
+  const fetchImageAsBuffer = async (url: string): Promise<{ buffer: Uint8Array; mimeType: string }> => {
     const res = await fetch(url);
     const blob = await res.blob();
-    return new Uint8Array(await blob.arrayBuffer());
+    const buffer = new Uint8Array(await blob.arrayBuffer());
+    return { buffer, mimeType: blob.type };
   };
 
   const exportDocx = async () => {
     if (!story || !imageUrl) return;
 
     try {
-      const imageBuffer = await fetchImageAsBuffer(imageUrl);
+      const { buffer, mimeType } = await fetchImageAsBuffer(imageUrl);
+
+      const imageType = mimeType === 'image/png' ? 'png' :
+                        mimeType === 'image/jpeg' || mimeType === 'image/jpg' ? 'jpg' :
+                        'png';
 
       const doc = new Document({
         sections: [{
@@ -82,9 +87,9 @@ export default function Home() {
             new Paragraph({
               children: [
                 new ImageRun({
-                  data: imageBuffer,
+                  data: buffer,
                   transformation: { width: 500, height: 500 },
-                  type: 'png',
+                  type: imageType,
                 }),
               ],
               alignment: AlignmentType.CENTER,
@@ -97,12 +102,12 @@ export default function Home() {
       saveAs(blob, 'kinderstory.docx');
     } catch (err) {
       alert('Failed to export DOCX. Please try again.');
-      console.error(err);
+      console.error('DOCX export error:', err);
     }
   };
 
   const exportPdf = async () => {
-    if (!printableRef.current) return;
+    if (!printableRef.current || !imageUrl) return;
 
     const html2pdf = (await import('html2pdf.js')).default;
 
@@ -110,15 +115,44 @@ export default function Home() {
       margin: [0.5, 0.5] as [number, number],
       filename: 'kinderstory.pdf',
       image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
+      html2canvas: { scale: 2, useCORS: true, allowTaint: true, logging: false },
       jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const },
     };
 
+    // Pre-load image as data URL so html2canvas doesn't fight CORS
+    let dataUrl = imageUrl;
     try {
-      await html2pdf().set(opt).from(printableRef.current).save();
+      const imgRes = await fetch(imageUrl);
+      const imgBlob = await imgRes.blob();
+      dataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(imgBlob);
+      });
+    } catch {
+      // fallback to original URL if fetch fails
+    }
+
+    // Temporarily inject the data URL into the printable image
+    const imgEl = printableRef.current.querySelector('img');
+    const originalSrc = imgEl?.getAttribute('src') || '';
+    if (imgEl) imgEl.src = dataUrl;
+
+    // Briefly make visible for html2canvas, then restore
+    const el = printableRef.current;
+    const wasHidden = el.style.visibility === 'hidden';
+    el.style.visibility = 'visible';
+    el.style.opacity = '0';
+
+    try {
+      await html2pdf().set(opt).from(el).save();
     } catch (err) {
       alert('Failed to export PDF. Please try again.');
-      console.error(err);
+      console.error('PDF export error:', err);
+    } finally {
+      el.style.visibility = wasHidden ? 'hidden' : '';
+      el.style.opacity = '';
+      if (imgEl) imgEl.src = originalSrc;
     }
   };
 
