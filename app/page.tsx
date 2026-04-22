@@ -48,8 +48,12 @@ export default function Home() {
     generateStory();
   };
 
+  const proxyImageUrl = (url: string) => `/api/proxy-image?url=${encodeURIComponent(url)}`;
+
   const fetchImageAsBuffer = async (url: string): Promise<{ buffer: Uint8Array; mimeType: string }> => {
-    const res = await fetch(url);
+    const proxyUrl = proxyImageUrl(url);
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error(`Proxy failed: ${res.status}`);
     const blob = await res.blob();
     const buffer = new Uint8Array(await blob.arrayBuffer());
     return { buffer, mimeType: blob.type };
@@ -119,10 +123,11 @@ export default function Home() {
       jsPDF: { unit: 'in' as const, format: 'letter' as const, orientation: 'portrait' as const },
     };
 
-    // Pre-load image as data URL so html2canvas doesn't fight CORS
-    let dataUrl = imageUrl;
+    // Pre-load image through proxy as data URL so html2canvas doesn't fight CORS
+    let dataUrl = proxyImageUrl(imageUrl);
     try {
-      const imgRes = await fetch(imageUrl);
+      const imgRes = await fetch(proxyImageUrl(imageUrl));
+      if (!imgRes.ok) throw new Error('Proxy failed');
       const imgBlob = await imgRes.blob();
       dataUrl = await new Promise<string>((resolve) => {
         const reader = new FileReader();
@@ -130,10 +135,10 @@ export default function Home() {
         reader.readAsDataURL(imgBlob);
       });
     } catch {
-      // fallback to original URL if fetch fails
+      // fallback to proxy URL if conversion fails
     }
 
-    // Temporarily inject the data URL into the printable image
+    // Also update the printable image src to the proxy/data URL
     const imgEl = printableRef.current.querySelector('img');
     const originalSrc = imgEl?.getAttribute('src') || '';
     if (imgEl) imgEl.src = dataUrl;
